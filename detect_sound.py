@@ -11,9 +11,9 @@ from matplotlib import pyplot as plt
 
 # Set some parameters:
 # These are in seconds:
-SND_THRESH = .5
-SIL_THRESH = .5
-AMP_THRESH = 500
+SND_THRESH = .025
+SIL_THRESH = .25
+AMP_THRESH = 100
 # Import wav (eventually this could run live (as ros?)) 
 wav_file = './annotated_wav_190213.wav'
 fs,wav_array = wf.read(wav_file)
@@ -39,18 +39,26 @@ clip_array = np.array(clip_array > AMP_THRESH).astype(int)
 ## Test with sample data:
 #wav_array = np.random.randint(0,high=2,size=1000)
 
-fig, (ax1,ax2) = plt.subplots(2)
-ax1.plot(clip_array[::1000])
-ax2.plot(wav_array[::1000])
-ax2.plot(filter_array[::1000])
-ax2.axhline(AMP_THRESH,color='r')
-fig.show()
+if False:
+    fig, (ax1,ax2) = plt.subplots(2)
+    ax1.plot(clip_array[::1000])
+    ax2.plot(wav_array[::1000])
+    ax2.plot(filter_array[::1000])
+    ax2.axhline(AMP_THRESH,color='r')
+    fig.show()
 
-import pdb
-pdb.set_trace()
-def sound_clip(wav_array,pos_start,pos_stop):
+if False:
+    import pdb
+    pdb.set_trace()
+
+def sound_clip(wav_array,pos_start,pos_stop,fs=48000):
 ## I could maybe have a part here to split it into manageable chunks...
-    print(wav_array[pos_start:pos_stop + 1])
+    #print(wav_array[pos_start:pos_stop + 1])
+    start_ms = int(pos_start / fs * 1000)
+    stop_ms = int(pos_stop / fs * 1000)
+    chunk = wav_array[start_ms:stop_ms]
+    out_name = './output_wavs/chunk_' + str(pos_start) + '.wav'
+    chunk.export(out_name, format="wav")
 
 sound_count = 0
 silence_count = 0
@@ -83,6 +91,6 @@ for sample_idx in range(len(clip_array)):
             counting_sound = False
             if sound_block:
                 print('clipping... at:',str(possible_start),str(possible_stop))
-                sound_clip(clip_array,possible_start,possible_stop)
+                sound_clip(wav_audio,possible_start,possible_stop)
                 sound_block = False
         silence_count += 1
