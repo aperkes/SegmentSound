@@ -56,8 +56,13 @@ def sound_clip(wav_array,pos_start,pos_stop,fs=48000):
     #print(wav_array[pos_start:pos_stop + 1])
     start_ms = int(pos_start / fs * 1000)
     stop_ms = int(pos_stop / fs * 1000)
+    #out_name = './output_wavs/chunk_' + str(pos_start) + '.wav'
+## Chunk it for maskrcnn inputs. 
+    start_ms = start_ms - 500
+    stop_ms = start_ms + 5000
+    out_name = './mask_wavs/chunk_' + str(pos_start) + '.wav'
+
     chunk = wav_array[start_ms:stop_ms]
-    out_name = './output_wavs/chunk_' + str(pos_start) + '.wav'
     chunk.export(out_name, format="wav")
 
 sound_count = 0
