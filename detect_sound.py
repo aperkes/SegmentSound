@@ -8,17 +8,34 @@ from pydub import AudioSegment
 from scipy.io import wavfile as wf
 from scipy.signal import butter, lfilter
 from matplotlib import pyplot as plt
+from scipy.signal import spectrogram
+from matplotlib import pyplot as plt
+
+import sys
 
 # Set some parameters:
 # These are in seconds:
 SND_THRESH = .025
 SIL_THRESH = .25
-AMP_THRESH = 100
+AMP_THRESH = 100 ## obviously not seconds, pressure I guess
+
 # Import wav (eventually this could run live (as ros?)) 
-wav_file = './annotated_wav_190213.wav'
+if len(sys.argv) > 1:
+    wav_file = sys.argv[1]
+    out_dir = sys.argv[2]
+    if out_dir[-1] != '/':
+        out_dir = outdir + '/'
+else:
+    wav_file = './annotated_wav_190213.wav'
+    out_dir = './timed_wavs_short/'
 fs,wav_array = wf.read(wav_file)
 wav_audio = AudioSegment.from_wav(wav_file)
 
+print('Array shape:',wav_array.shape)
+
+## Convert to stereo if needed
+if len(wav_array.shape) > 1:
+    wav_array = wav_array[:,0]
 # Bandpass filter (see scipy cookbook)
 lowcut = 2000
 highcut = 20000
@@ -51,19 +68,37 @@ if False:
     import pdb
     pdb.set_trace()
 
+def save_Sxx(out_file,wav_array,fs=48000):
+    clean_array = np.array(wav_array.get_array_of_samples())
+    f,ts,Sxx = spectrogram(clean_array,fs)
+    Sxx = np.flipud(Sxx)
+    Sxx = np.log(Sxx)
+    Sxx = np.clip(Sxx,-5,3)
+    plt.imsave(out_file,Sxx,dpi=300)
+
 def sound_clip(wav_array,pos_start,pos_stop,fs=48000):
 ## I could maybe have a part here to split it into manageable chunks...
     #print(wav_array[pos_start:pos_stop + 1])
-    start_ms = int(pos_start / fs * 1000)
-    stop_ms = int(pos_stop / fs * 1000)
+    start_ms = int(pos_start / fs * 1000) - 100
+    true_stop_ms = int(pos_stop / fs * 1000) + 100
+    if true_stop_ms - start_ms > 5000:
+        stop_ms = start_ms + 5000
+        print('clipped, making another segment')
+        pos_clipped = int(stop_ms * fs / 1000)
+        sound_clip(wav_array,pos_clipped,pos_stop,fs)
+    else:
+        stop_ms = true_stop_ms
     #out_name = './output_wavs/chunk_' + str(pos_start) + '.wav'
 ## Chunk it for maskrcnn inputs. 
-    start_ms = start_ms - 500
-    stop_ms = start_ms + 5000
-    out_name = './mask_wavs/chunk_' + str(pos_start) + '.wav'
+    #start_ms = start_ms - 500
+    #stop_ms = start_ms + 5000
+    #out_name = './mask_wavs/chunk_' + str(pos_start) + '.wav'
+    out_name = 'clip_' + "%07d" % start_ms + '-' + "%07d" % stop_ms + '.wav'
+    Sxx_name = out_name.replace('wav','png')
 
     chunk = wav_array[start_ms:stop_ms]
-    chunk.export(out_name, format="wav")
+    #chunk.export(out_dir + out_name, format="wav") #uncomment if you want to save wavs
+    save_Sxx(out_dir + Sxx_name,chunk,fs)
 
 sound_count = 0
 silence_count = 0
