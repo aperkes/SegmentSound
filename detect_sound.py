@@ -35,7 +35,10 @@ print('Array shape:',wav_array.shape)
 
 ## Convert to stereo if needed
 if len(wav_array.shape) > 1:
+    print('converting to mono')
     wav_array = wav_array[:,0]
+    print('New Shape:',wav_array.shape)
+
 # Bandpass filter (see scipy cookbook)
 lowcut = 2000
 highcut = 20000
@@ -80,8 +83,13 @@ def sound_clip(wav_array,pos_start,pos_stop,fs=48000):
 ## I could maybe have a part here to split it into manageable chunks...
     #print(wav_array[pos_start:pos_stop + 1])
     start_ms = int(pos_start / fs * 1000) - 100
+    if start_ms < 0:
+        start_ms = 0
     true_stop_ms = int(pos_stop / fs * 1000) + 100
-    if true_stop_ms - start_ms > 5000:
+    if true_stop_ms > len(wav_array) -1:
+        true_stop_ms = len(wav_array) - 1
+## I need to make sure the clips don't end up too small...
+    if true_stop_ms - start_ms > 5500:
         stop_ms = start_ms + 5000
         print('clipped, making another segment')
         pos_clipped = int(stop_ms * fs / 1000)
@@ -96,6 +104,7 @@ def sound_clip(wav_array,pos_start,pos_stop,fs=48000):
     out_name = 'clip_' + "%07d" % start_ms + '-' + "%07d" % stop_ms + '.wav'
     Sxx_name = out_name.replace('wav','png')
 
+    #print(start_ms,stop_ms)
     chunk = wav_array[start_ms:stop_ms]
     #chunk.export(out_dir + out_name, format="wav") #uncomment if you want to save wavs
     save_Sxx(out_dir + Sxx_name,chunk,fs)

@@ -25,7 +25,7 @@ if len(sys.argv) > 1:
         input_dir = input_dir + '/'
     try:
 ## Bit hacky, but it grabs the last integer, expecting that to be the ros time
-        ROS_START = input_dir.split('/')[-2].split('_')[-1]
+        ROS_START = input_dir.split('/')[-2].split('_')[-2]
         ROS_START = int(ROS_START)
     except:
         import pdb
@@ -35,6 +35,8 @@ if len(sys.argv) > 1:
 else:
     input_dir = 'data/test_pngs/'
     ROS_START = 0
+out_name = input_dir.split('/')[-2]
+
 data_transforms = {
     'predict': transforms.Compose([
         transforms.Resize(224),
@@ -115,7 +117,7 @@ print('0:',class_names[0])
 print('1:',class_names[1])
 
 print('writing to file:')
-with open('predictions2.pkl','wb') as outfile:
+with open(input_dir + out_name + '_predictions.pkl','wb') as outfile:
     pickle.dump(output,outfile)
 
 ## Take a output dict and convert it into a nice line
@@ -132,7 +134,9 @@ def parse_line(out_line):
 
 print('Making summary')
 save_classes=['song','burble']
-with open(input_dir + 'summary.txt','w') as out_file:
+
+
+with open(input_dir + out_name + '_summary.txt','w') as out_file:
     for l in range(len(output)):
         line = output[l]
         if line['class_name'] in save_classes:
