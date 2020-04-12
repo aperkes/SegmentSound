@@ -127,8 +127,8 @@ def parse_line(out_line):
     times = trim_name.split('_')[1] 
     start_time,stop_time = times.split('-') 
     event = out_line['class_name']
-    ros_start = int(start_time) + ROS_START
-    ros_stop = int(stop_time) + ROS_START
+    ros_start = int(start_time) * .001 + ROS_START
+    ros_stop = int(stop_time) * .001 + ROS_START
     out_line = ','.join([start_time,event,stop_time,str(ros_start),str(ros_stop)])
     return out_line
 
