@@ -28,8 +28,8 @@ if len(sys.argv) > 1:
         ROS_START = input_dir.split('/')[-2].split('_')[-2]
         ROS_START = int(ROS_START)
     except:
-        import pdb
-        pdb.set_trace()
+        #import pdb
+        #pdb.set_trace()
         print('ROS time not found')
         ROS_START = 0
 else:
@@ -136,7 +136,11 @@ print('Making summary')
 save_classes=['song','burble']
 
 
-with open(input_dir + out_name + '_summary.txt','w') as out_file:
+# Save to a single directory, to make things tidier
+OUTPUT = '/home/ammon/Documents/Scripts/SegmentSound/working_dir/'
+#output_dir = input_dir
+output_dir = OUTPUT
+with open(output_dir + out_name + '_summary.txt','w') as out_file:
     for l in range(len(output)):
         line = output[l]
         if line['class_name'] in save_classes:
