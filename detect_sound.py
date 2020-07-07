@@ -12,7 +12,7 @@ from scipy.signal import spectrogram
 from matplotlib import pyplot as plt
 import argparse
 
-import sys
+import sys,os
 
 # Set some parameters:
 # These are in seconds:
@@ -22,11 +22,13 @@ AMP_THRESH = 100 ## obviously not seconds, pressure I guess
 S_DEFAULT = 3600
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--wav',default=None,required=True,help='Input .wav file to run detection on')
-parser.add_argument('--segment_size',default=S_DEFAULT,required=False,help='Number of seconds per wav segment')
-parser.add_argument('--out_dir',default=None,required=False,help='Directory for storing output (Defaults to directory matching the file name)')
-parser.add_argument('--ros_start',default=None,required=False,help='ROS time start (seconds) of the original file, if absent will try to grab it from the .wav filename')
-parser.add_argument('--chunk_number',default=None,required=False,help='Number of the chunk, if absent will try to grab from the .wav filename')
+parser.add_argument('-i','--wav',default=None,required=True,help='Input .wav file to run detection on')
+parser.add_argument('-s','--segment_size',default=S_DEFAULT,required=False,help='Number of seconds per wav segment')
+parser.add_argument('-o','--out_dir',default=None,required=False,help='Directory for storing output (Defaults to directory matching the file name)')
+parser.add_argument('-t','--ros_start',default=None,required=False,help='ROS time start (seconds) of the original file, if absent will try to grab it from the .wav filename')
+parser.add_argument('-c','--chunk_number',default=None,required=False,help='Number of the chunk, if absent will try to grab from the .wav filename')
+parser.add_argument('-w','--save_wav',action="store_true",help='Save the clips as a wavform? Include for True')
+parser.add_argument('-d','--drop_png',action="store_true",help='Delete the png rather than save? Include to delete')
 args = parser.parse_args()
 
 wav_file = args.wav
@@ -36,6 +38,10 @@ if args.out_dir is not None:
     out_dir = args.out_dir
 else:
     out_dir = './working_dir/' + wav_name + '/'
+    if not os.path.exists(out_dir):
+        os.makedirs(out_dir)
+        os.makedirs(out_dir + '/images')
+        os.makedirs(out_dir + '/wavs')
 if out_dir[-1] != '/':
     out_dir = out_dir + '/'
 
@@ -172,10 +178,12 @@ def sound_clip(wav_audio,pos_start,pos_stop,fs=48000,offset = 0):
     #print(start_ms,stop_ms)
     chunk = wav_audio[start_ms:stop_ms]
     wav_dir = out_dir.replace('images','wavs')
-    chunk.export(wav_dir + out_name, format="wav") #uncomment if you want to save wavs
+    if args.save_wav:
+        chunk.export(wav_dir + out_name, format="wav") #uncomment if you want to save wavs
     #chunk_array = np.array(chunk)
     chunk_array = wav_array[pos_start:pos_clipped]
-    save_Sxx(out_dir + Sxx_name,chunk_array,fs)
+    if not args.drop_png:
+        save_Sxx(out_dir + Sxx_name,chunk_array,fs)
 
 sound_count = 0
 silence_count = 0
